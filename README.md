@@ -66,6 +66,34 @@ bash scripts/publish_pages.sh --no-build # 直接用现有 dist/
 DBNAME=vtb bash scripts/release_github.sh   # 切回旧名（客户端 [节名] 与 Server 要同步改）
 ```
 
+### 二进制 tar.gz：发到旧仓库的 Release
+
+pacman 只服务 Arch。其它发行版 / 其它机器需要的是「能直接解包的 tar.gz」，
+这份归档发在旧仓库 `tc1911/vtb-pkgs` 的 Release 里（那是归档位，不当软件源用）：
+
+```bash
+bash scripts/release_binaries.sh               # 默认 TAG=v0.2.0
+TAG=v0.3.0 bash scripts/release_binaries.sh
+```
+
+它**不重新编译**，只把 `dist/` 里已构建的 `.pkg.tar.zst` 拆开、丢掉 pacman 自己的元数据
+（`.PKGINFO` / `.BUILDINFO` / `.MTREE` / `.INSTALL`），把剩下的 `usr/` 树重新压成 `.tar.gz`，
+建 Release 并上传，最后验证下载地址返回 200：
+
+```bash
+sudo tar xzf open-vt-bin-*.tar.gz -C /     # 装法（不进 pacman 数据库）
+```
+
+> `github.com` 直连不通，脚本开头就把 `HTTPS_PROXY` 导出了（`gh` 和 `curl` 都靠它）；
+> 想换压缩器：`COMPRESSOR=pigz bash scripts/release_binaries.sh`（装过 pigz 快很多）。
+
+#### 两个仓库的分工
+
+| | 放什么 | 为什么 |
+|---|---|---|
+| **本仓库** `tc191-pkgs` | 配方 + `gh-pages` 上的包 | 源码配方要跟代码一起演进；产物滚动覆盖，不堆 Release |
+| **旧仓库** `vtb-pkgs` | 模型产出 + 文档 + Release 里的二进制 tar.gz | 二进制不进 git 历史；非 Arch 用户拿 tar.gz 就能解包 |
+
 ### 两个容易踩的坑
 
 - **GitHub Release 不能存符号链接**，而 `repo-add` 产出的 `<db>.db` / `<db>.files` 是指向
