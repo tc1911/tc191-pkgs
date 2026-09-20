@@ -32,6 +32,7 @@ sudo pacman -S open-vt-bin        # 例如
 | `open-vt-bin` | [OpenVT](https://github.com/erodozer/open-vt) 虚拟主播软件。打了补丁：虚拟摄像头输出、双摄支持 |
 | `openseeface` | OpenSeeFace 面捕（facetracker） |
 | `psd2live-bin` | psd2live：PSD → Live2D 自动绑定的桌面版 |
+| `auto-vtb-bin` | Auto_Vtb：psd2live 的下游版（自动绑定 + 导出 + 内置 MCP，**自带 JRE**）|
 
 补丁明细见 `docs/PATCHES.md`。
 
@@ -42,6 +43,7 @@ sudo pacman -S open-vt-bin        # 例如
 ```bash
 bash open-vt-bin/make_openvt_pkg.sh     # → /home/tc191/vtb/归档/open-vt-bin/
 bash psd2live-bin/make_psd2live_pkg.sh  # → /home/tc191/vtb/归档/psd2live-bin/
+bash auto-vtb-bin/make_auto_vtb_pkg.sh  # → /home/tc191/vtb/归档/auto-vtb-bin/（先构建 app image）
 cd openseeface && makepkg -f            # → /home/tc191/opt/openvt-pkg/openseeface/
 ```
 
@@ -52,7 +54,7 @@ bash scripts/publish_pages.sh           # 生成 dist/ → 推 gh-pages → 打�
 bash scripts/publish_pages.sh --no-build # 直接用现有 dist/
 ```
 
-`publish_pages.sh` 会先调 `release_github.sh`：收集三个包 → `repo-add` 生成仓库索引 →
+`publish_pages.sh` 会先调 `release_github.sh`：收集四个包 → `repo-add` 生成仓库索引 →
 校验索引里的 SHA256/CSIZE 与实际文件一致 → 生成 GPL 义务要求的 corresponding-source
 → 写 `SHA256SUMS`；然后把这一整套推到 `gh-pages` 分支（滚动 `--force` 覆盖）。
 

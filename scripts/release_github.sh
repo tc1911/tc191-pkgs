@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 准备 GitHub Release 的发布资源到 dist/：
-#   三个 .pkg.tar.zst + ${DBNAME}.db(.tar.gz) + ${DBNAME}.files(.tar.gz) + SHA256SUMS
+#   四个 .pkg.tar.zst + ${DBNAME}.db(.tar.gz) + ${DBNAME}.files(.tar.gz) + SHA256SUMS
 #
 # 为什么要同时放 <repo>.db 和 <repo>.db.tar.gz：
 #   pacman 会先找 `<repo>.db`，找不到才回落 `<repo>.db.tar.gz`。
@@ -25,14 +25,16 @@ rm -rf "$DIST"; mkdir -p "$DIST"
 echo "== 2/5 收集包 =="
 shopt -s nullglob
 PKGS=()
-for d in "$OUT/open-vt-bin" "$OUT/psd2live-bin" "$OPENSEEFACE_DIR"; do
+# 每加一个包只需在这里添一行目录
+PKGDIRS=("$OUT/open-vt-bin" "$OUT/psd2live-bin" "$OUT/auto-vtb-bin" "$OPENSEEFACE_DIR")
+for d in "${PKGDIRS[@]}"; do
 	for f in "$d"/*.pkg.tar.zst; do
 		install -m644 "$f" "$DIST/"
 		PKGS+=("$DIST/$(basename "$f")")
 		echo "  + $(basename "$f")  ($(stat -c%s "$f") 字节)"
 	done
 done
-[ ${#PKGS[@]} -eq 3 ] || { echo "只找到 ${#PKGS[@]} 个包，应当是 3 个"; exit 1; }
+[ ${#PKGS[@]} -eq ${#PKGDIRS[@]} ] || { echo "只找到 ${#PKGS[@]} 个包，应当是 ${#PKGDIRS[@]} 个"; exit 1; }
 
 echo "== 3/5 生成仓库索引 =="
 cd "$DIST"

@@ -41,10 +41,11 @@ for pkg in "$DIST"/*.pkg.tar.zst; do
   base=${pkg##*/}
   name=${base%-x86_64.pkg.tar.zst}
   case "$name" in *corresponding-source*|*src*) continue;; esac
-  # 已经打过而且比包新就跳过：重跑幂等，不用每次重压 236MB
+  # 已经打过而且能完整解包就跳过：mtime 不可靠（发布流程用 install 会刷新包的 mtime，
+  # 那样每次都重压 6 分钟），用“存在 + tar 能列”当判决，需要重打时 FORCE_REBUILD=1
   out="$OUT/$name-x86_64.tar.gz"
-  if [ -f "$out" ] && [ "$out" -nt "$pkg" ]; then
-    echo "  ↻ $name-x86_64.tar.gz 已是最新，跳过"
+  if [ -f "$out" ] && [ -z "${FORCE_REBUILD:-}" ] && tar -tzf "$out" >/dev/null 2>&1; then
+    echo "  ↻ $name-x86_64.tar.gz 已存在且可解包，跳过"
     OUTPUTS+=("$out")
     n=$((n+1)); continue
   fi
@@ -117,7 +118,24 @@ cat "$NOTES" | sed 's/^/  | /'
 # 幂等：Release 已存在就复用，再 --clobber 覆盖上传（重跑不会卡在“已存在”）
 gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 \
   || gh release create "$TAG" --repo "$REPO" --title "Linux 二进制归档 $TAG" --notes-file "$NOTES"
-gh release upload "$TAG" --repo "$REPO" --clobber "${OUTPUTS[@]}"
+# 已存在的 Release 也要刷新说明（否则新加的包不会出现在描述里）
+gh release edit "$TAG" --repo "$REPO" --notes-file "$NOTES"
+# 只传 Release 里缺的（或大小对不上的），避免每次发布重传几百 MB
+EXISTING=$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[] | "\(.name) \(.size)"' 2>/dev/null || true)
+UPLOAD=()
+for f in "${OUTPUTS[@]}"; do
+  n=${f##*/}; sz=$(stat -c%s "$f")
+  if grep -qxF "$n $sz" <<< "$EXISTING"; then
+    echo "  = $n 已在 Release 且大小一致，跳过上传"
+  else
+    UPLOAD+=("$f")
+  fi
+done
+if [ ${#UPLOAD[@]} -gt 0 ]; then
+  gh release upload "$TAG" --repo "$REPO" --clobber "${UPLOAD[@]}"
+else
+  echo "  没有需要上传的文件"
+fi
 
 rm -f "$NOTES"
 echo
