@@ -112,7 +112,7 @@ Server = https://tc1911.github.io/tc191-pkgs/
 ```
 EOF
 } > "$NOTES"
-cat "$NOTES" | sed 's/^/  | '
+cat "$NOTES" | sed 's/^/  | /'
 
 # 幂等：Release 已存在就复用，再 --clobber 覆盖上传（重跑不会卡在“已存在”）
 gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 \
