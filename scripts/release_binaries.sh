@@ -20,13 +20,19 @@ OUT=${OUT:-/tmp/vtb-bin-tarballs}
 export HTTPS_PROXY=${HTTPS_PROXY:-http://127.0.0.1:7890}
 export HTTP_PROXY=${HTTP_PROXY:-http://127.0.0.1:7890}
 export NO_PROXY=${NO_PROXY:-127.0.0.1,localhost}
+# 代理会偶发抖动，一次不过就放弃太脆 —— 探测三次
+for i in 1 2 3; do
+  gh auth status >/dev/null 2>&1 && break
+  echo "  gh 探测失败（第 $i 次），3 秒后重试…"; sleep 3
+done
 gh auth status >/dev/null 2>&1 || { echo "gh 未登录或代理不通 —— 先 gh auth login"; exit 1; }
 
 [ -d "$DIST" ] || { echo "找不到 $DIST —— 先跑 scripts/release_github.sh"; exit 1; }
 command -v zstd >/dev/null || { echo "缺 zstd（sudo pacman -S zstd）"; exit 1; }
 command -v "$COMPRESSOR" >/dev/null || COMPRESSOR=gzip
 
-rm -rf "$OUT"; mkdir -p "$OUT"
+mkdir -p "$OUT"
+OUTPUTS=()   # 只收录 dist/ 里真有对应包的那几个，$OUT 里的陈年残体不会被发出去
 echo "=== 打包目录: $OUT  压缩器: $COMPRESSOR ==="
 
 shopt -s nullglob
@@ -35,6 +41,13 @@ for pkg in "$DIST"/*.pkg.tar.zst; do
   base=${pkg##*/}
   name=${base%-x86_64.pkg.tar.zst}
   case "$name" in *corresponding-source*|*src*) continue;; esac
+  # 已经打过而且比包新就跳过：重跑幂等，不用每次重压 236MB
+  out="$OUT/$name-x86_64.tar.gz"
+  if [ -f "$out" ] && [ "$out" -nt "$pkg" ]; then
+    echo "  ↻ $name-x86_64.tar.gz 已是最新，跳过"
+    OUTPUTS+=("$out")
+    n=$((n+1)); continue
+  fi
   work=$(mktemp -d)
   tar --zstd -xf "$pkg" -C "$work"
   # 去掉 pacman 自己的元数据，只留真正安装的文件树
@@ -42,6 +55,7 @@ for pkg in "$DIST"/*.pkg.tar.zst; do
   tar -C "$work" --use-compress-program="$COMPRESSOR" -cf "$OUT/$name-x86_64.tar.gz" .
   rm -rf "$work"
   echo "  ✓ $name-x86_64.tar.gz"
+  OUTPUTS+=("$OUT/$name-x86_64.tar.gz")
   n=$((n+1))
 done
 [ "$n" -gt 0 ] || { echo "dist/ 里没有 .pkg.tar.zst"; exit 1; }
@@ -53,7 +67,7 @@ ls -lh "$OUT" | sed 's/^/  /'
 # 自检：每个 tar.gz 能不能完整列出、里面有没有 usr/
 # 不要写成 `tar -tzf "$f" | grep -q ...`：grep -q 找到即退，tar 接着写会吃 SIGPIPE，
 # 在 `set -o pipefail` 下整条管道判失败 —— 会误报“打包异常”（踩过）。
-for f in "$OUT"/*.tar.gz; do
+for f in "${OUTPUTS[@]}"; do
   listing=$(tar -tzf "$f") || { echo "!! $f 解不开（tar 报错）"; exit 1; }
   case "$listing" in
     *"./usr/"*) ;;
@@ -84,7 +98,7 @@ sudo tar xzf <文件>.tar.gz -C /
 ### 文件
 
 EOF
-for f in "$OUT"/*.tar.gz; do printf '* `%s` (%s)\n' "${f##*/}" "$(du -h "$f" | cut -f1)"; done
+for f in "${OUTPUTS[@]}"; do printf '* `%s` (%s)\n' "${f##*/}" "$(du -h "$f" | cut -f1)"; done
 cat <<'EOF'
 
 ### Arch 用户请直接用 pacman 源
@@ -100,16 +114,16 @@ EOF
 } > "$NOTES"
 cat "$NOTES" | sed 's/^/  | '
 
-gh release create "$TAG" --repo "$REPO" \
-  --title "Linux 二进制归档 $TAG" \
-  --notes-file "$NOTES" \
-  "$OUT"/*.tar.gz
+# 幂等：Release 已存在就复用，再 --clobber 覆盖上传（重跑不会卡在“已存在”）
+gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 \
+  || gh release create "$TAG" --repo "$REPO" --title "Linux 二进制归档 $TAG" --notes-file "$NOTES"
+gh release upload "$TAG" --repo "$REPO" --clobber "${OUTPUTS[@]}"
 
 rm -f "$NOTES"
 echo
 echo "=== 验证下载地址 ==="
 # 代理在脚本开头已导出，gh / curl 都靠它
-for f in "$OUT"/*.tar.gz; do
+for f in "${OUTPUTS[@]}"; do
   u="https://github.com/$REPO/releases/download/$TAG/${f##*/}"
   code=$(curl -sIL -o /dev/null -w '%{http_code}' "$u" || echo ERR)
   echo "  $code  ${f##*/}"
