@@ -14,9 +14,27 @@ set -euo pipefail
 
 TREE=/home/tc191/opt/probe-psd2live/psd2live
 PATCH=/home/tc191/opt/psd2live-groupindex-fix.patch
-DIST=/home/tc191/vtb/仓库/vtb-pkgs/dist
+DIST=/home/tc191/vtb/仓库/tc191-pkgs/dist
+# 源码树被清掉之后，已生成的对应源码归档放这里，下次发布直接复用
+ARCHIVE_DIR=/home/tc191/vtb/归档/corresponding-source
 
-[ -d "$TREE/.git" ] || { echo "$TREE 不是 git 仓库"; exit 1; }
+# 源码树不在时退回复用归档：对应源码是**按包版本**固定的东西，
+# 同一个 psd2live-bin 0.7.1.r1.c8ad876 对应的源码永远是同一份归档，
+# 为了重新上传到新仓库而重新生成一遍没有意义（重建还可能引入差异）。
+if [ ! -d "$TREE/.git" ]; then
+	shopt -s nullglob
+	CAND=("$ARCHIVE_DIR"/psd2live-*-corresponding-source.tar.zst)
+	if [ ${#CAND[@]} -eq 1 ] && [ -f "${CAND[0]}" ]; then
+		echo "  源码树不在（$TREE）"
+		echo "  复用已归档的对应源码：$(basename "${CAND[0]}")"
+		echo "    $(stat -c%s "${CAND[0]}") 字节  sha256 $(sha256sum "${CAND[0]}" | cut -c1-12)…"
+		install -m644 "${CAND[0]}" "$DIST/"
+		exit 0
+	fi
+	echo "  ✗ 源码树不在（$TREE），且 $ARCHIVE_DIR 里没有可复用的归档"
+	echo "    要么重新 clone 到 $TREE，要么把归档放进 $ARCHIVE_DIR"
+	exit 1
+fi
 
 VER=$(grep -m1 'packageVersion' "$TREE/build.gradle.kts" | sed 's/.*"\(.*\)".*/\1/')
 COMMIT=$(git -C "$TREE" rev-parse --short HEAD)
