@@ -50,9 +50,15 @@ echo
 echo "=== 产出 ==="
 ls -lh "$OUT" | sed 's/^/  /'
 
-# 自检：每个 tar.gz 能不能列出来、里面有没有 usr/
+# 自检：每个 tar.gz 能不能完整列出、里面有没有 usr/
+# 不要写成 `tar -tzf "$f" | grep -q ...`：grep -q 找到即退，tar 接着写会吃 SIGPIPE，
+# 在 `set -o pipefail` 下整条管道判失败 —— 会误报“打包异常”（踩过）。
 for f in "$OUT"/*.tar.gz; do
-  tar -tzf "$f" | grep -q '^\./usr/' || { echo "!! $f 里没有 ./usr/ —— 打包异常"; exit 1; }
+  listing=$(tar -tzf "$f") || { echo "!! $f 解不开（tar 报错）"; exit 1; }
+  case "$listing" in
+    *"./usr/"*) ;;
+    *) echo "!! $f 里没有 ./usr/ —— 打包异常"; exit 1 ;;
+  esac
 done
 echo "  ✓ 自检通过（都含 ./usr/ 文件树）"
 
