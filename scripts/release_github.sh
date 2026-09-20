@@ -72,23 +72,13 @@ sha256sum ./*.pkg.tar.zst ./*-corresponding-source.tar.zst > SHA256SUMS
 cat SHA256SUMS | sed 's/^/  /'
 
 echo
-echo "================ dist/ 就绪 ================"
+ echo "================ dist/ 就绪 ================"
 ls -lh "$DIST" | sed 's/^/  /'
 TAG="${TAG:-v0.1.0}"   # 可用环境变量覆盖；与 RELEASE_NOTES.md 的版本号一致
 echo
 echo "  tag: $TAG"
 echo
-echo "===== 上传：路线 A（命令行，需要 github-cli + token）====="
-echo "  sudo pacman -S github-cli"
-if command -v gh >/dev/null; then echo "  gh 已安装"; else echo "  （gh 尚未安装）"; fi
-echo "  gh auth login            # 选 GitHub.com / HTTPS / 浏览器登录"
-echo "  cd $REPO"
-echo "  git push -u origin main"
-echo "  gh release create $TAG $DIST/* --title \"${TAG}\" --notes-file RELEASE_NOTES.md"
-echo
-echo "===== 上传：路线 B（网页拖拽，不需要 token）====="
-echo "  1. https://github.com/tc1911/tc191-pkgs/releases/new?tag=$TAG"
-echo "  2. 把 $DIST/ 里**全部**文件拖进附件区（含 ${DBNAME}.db / ${DBNAME}.files 的实体副本、SHA256SUMS）"
-echo "  3. 发布后确认这几个 URL 都是 200："
-echo "     https://github.com/tc1911/tc191-pkgs/releases/latest/download/${DBNAME}.db"
-echo "     https://github.com/tc1911/tc191-pkgs/releases/latest/download/${DBNAME}.db.tar.gz"
+echo "===== 发布 ====="
+echo "  bash $REPO/scripts/publish_pages.sh --no-build"
+echo "  （把 dist/ 整体推到 gh-pages 分支，用 GitHub Pages 当 pacman 源；"
+echo "    不用 GitHub Release，附件区不会堆一堆二进制）"
