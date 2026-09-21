@@ -14,7 +14,9 @@ set -euo pipefail
 
 TREE=/home/tc191/opt/probe-psd2live/psd2live
 PATCH=/home/tc191/opt/psd2live-groupindex-fix.patch
-DIST=/home/tc191/vtb/仓库/tc191-pkgs/dist
+# 仓库根目录从脚本自身位置推导（本脚本在 <root>/scripts/ 下）
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DIST="$REPO/dist"
 # 源码树被清掉之后，已生成的对应源码归档放这里，下次发布直接复用
 ARCHIVE_DIR=/home/tc191/vtb/归档/corresponding-source
 

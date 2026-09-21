@@ -13,7 +13,8 @@
 set -euo pipefail
 
 DBNAME="${DBNAME:-tc191}"
-REPO=/home/tc191/vtb/仓库/tc191-pkgs
+# 仓库根目录从脚本自身位置推导（本脚本在 <root>/scripts/ 下），搬目录不用改脚本
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REMOTE=git@github.com:tc1911/tc191-pkgs.git
 DIST="$REPO/dist"
 PAGES="https://tc1911.github.io/tc191-pkgs"

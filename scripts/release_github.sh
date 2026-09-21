@@ -14,7 +14,8 @@ set -euo pipefail
 # 数据库文件名。默认 tc191；设 DBNAME=vtb 可以切回旧名（客户端 pacman.conf 的 [节名] 与 Server 要同步改）
 DBNAME="${DBNAME:-tc191}"
 
-REPO=/home/tc191/vtb/仓库/tc191-pkgs
+# 仓库根目录从脚本自身位置推导（本脚本在 <root>/scripts/ 下），搬目录不用改脚本
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="$REPO/dist"
 OUT=/home/tc191/vtb/归档
 OPENSEEFACE_DIR=/home/tc191/opt/openvt-pkg/openseeface
