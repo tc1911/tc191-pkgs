@@ -33,6 +33,7 @@ sudo pacman -S open-vt-bin        # 例如
 | `openseeface` | OpenSeeFace 面捕（facetracker） |
 | `psd2live-bin` | psd2live：PSD → Live2D 自动绑定的桌面版 |
 | `auto-vtb-bin` | Auto_Vtb：psd2live 的下游版（自动绑定 + 导出 + 内置 MCP，**自带 JRE**）|
+| `bilibili-live-tui-plus` | Bilibili 直播弹幕 TUI 客户端（扫码登录 / 分区选择 / 开播取推流码）|
 
 补丁明细见 `docs/PATCHES.md`。
 
@@ -44,6 +45,7 @@ sudo pacman -S open-vt-bin        # 例如
 bash open-vt-bin/make_openvt_pkg.sh     # → /home/tc191/vtb/归档/open-vt-bin/
 bash psd2live-bin/make_psd2live_pkg.sh  # → /home/tc191/vtb/归档/psd2live-bin/
 bash auto-vtb-bin/make_auto_vtb_pkg.sh  # → /home/tc191/vtb/归档/auto-vtb-bin/（先构建 app image）
+bash bilibili-live-tui-plus/make_bilibili_live_tui_plus_pkg.sh  # → /home/tc191/vtb/归档/bilibili-live-tui-plus/
 cd openseeface && makepkg -f            # → /home/tc191/opt/openvt-pkg/openseeface/
 ```
 

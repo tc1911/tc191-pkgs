@@ -4,4 +4,5 @@ dist/
 *.pkg.tar.zst
 *.pkg.tar.xz
 *.tar.zst
+*.tar.gz
 *.part

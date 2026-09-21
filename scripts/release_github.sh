@@ -27,7 +27,7 @@ echo "== 2/5 收集包 =="
 shopt -s nullglob
 PKGS=()
 # 每加一个包只需在这里添一行目录
-PKGDIRS=("$OUT/open-vt-bin" "$OUT/psd2live-bin" "$OUT/auto-vtb-bin" "$OPENSEEFACE_DIR")
+PKGDIRS=("$OUT/open-vt-bin" "$OUT/psd2live-bin" "$OUT/auto-vtb-bin" "$OUT/bilibili-live-tui-plus" "$OPENSEEFACE_DIR")
 for d in "${PKGDIRS[@]}"; do
 	for f in "$d"/*.pkg.tar.zst; do
 		install -m644 "$f" "$DIST/"
