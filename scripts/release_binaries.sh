@@ -4,15 +4,17 @@
 #       tar.gz，`sudo tar xzf xxx.tar.gz -C /` 就装好了（内容就是包里的 usr/ 树）。
 #
 # 用法：
-#   bash scripts/release_binaries.sh              # 默认 TAG=v0.2.0
-#   TAG=v0.3.0 bash scripts/release_binaries.sh   # 换版本
+#   bash scripts/release_binaries.sh              # TAG 默认 = v<UTC 日期>，如 v2026.09.21
+#   TAG=v0.3.0 bash scripts/release_binaries.sh   # 显式指定版本号
 #   COMPRESSOR=pigz bash scripts/release_binaries.sh   # 装过 pigz 会快很多
 set -euo pipefail
 
 REPO_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DIST=${DIST:-$REPO_DIR/dist}
 REPO=${REPO:-tc1911/vtb-bin}           # 归档仓库
-TAG=${TAG:-v0.2.0}
+# TAG 默认按 UTC 日期归档：同一天重跑会复用同一个 Release（幂等），跳天自动另起。
+# 不要写死一个固定 tag —— 那样新包只会 --clobber 覆盖掉历史版本，归档就白做了。
+TAG=${TAG:-v$(date -u +%Y.%m.%d)}
 COMPRESSOR=${COMPRESSOR:-gzip}
 OUT=${OUT:-/tmp/vtb-bin-tarballs}
 
@@ -60,6 +62,16 @@ for pkg in "$DIST"/*.pkg.tar.zst; do
   n=$((n+1))
 done
 [ "$n" -gt 0 ] || { echo "dist/ 里没有 .pkg.tar.zst"; exit 1; }
+
+# GPL-3 的对应源码（Corresponding Source）也要走这条通道一起发：
+# 只分发 GPL 二进制、不提供源码是不合规的。直接当附件传，不再重新包装。
+SRC_ASSETS=()
+for f in "$DIST"/*corresponding-source.tar.zst; do
+  SRC_ASSETS+=("$f")
+done
+if [ ${#SRC_ASSETS[@]} -gt 0 ]; then
+  echo "  含对应源码附件 ${#SRC_ASSETS[@]} 个"
+fi
 
 echo
 echo "=== 产出 ==="
@@ -112,6 +124,16 @@ SigLevel = Optional TrustAll
 Server = https://tc1911.github.io/tc191-pkgs/
 ```
 EOF
+if [ ${#SRC_ASSETS[@]} -gt 0 ]; then
+cat <<'EOF'
+
+### 对应源码（GPL-3 第 6 条）
+
+`psd2live-bin` 构建时的源码相对上游有改动，按 GPL-3 必须随二进制一同提供 Corresponding Source：
+
+EOF
+for f in "${SRC_ASSETS[@]}"; do printf '* `%s` (%s)\n' "${f##*/}" "$(du -h "$f" | cut -f1)"; done
+fi
 } > "$NOTES"
 cat "$NOTES" | sed 's/^/  | /'
 
@@ -122,8 +144,11 @@ gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 \
 gh release edit "$TAG" --repo "$REPO" --notes-file "$NOTES"
 # 只传 Release 里缺的（或大小对不上的），避免每次发布重传几百 MB
 EXISTING=$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[] | "\(.name) \(.size)"' 2>/dev/null || true)
+# 二进制 tar.gz 和对应源码都要发
+ALL_ASSETS=("${OUTPUTS[@]}")
+if [ ${#SRC_ASSETS[@]} -gt 0 ]; then ALL_ASSETS+=("${SRC_ASSETS[@]}"); fi
 UPLOAD=()
-for f in "${OUTPUTS[@]}"; do
+for f in "${ALL_ASSETS[@]}"; do
   n=${f##*/}; sz=$(stat -c%s "$f")
   if grep -qxF "$n $sz" <<< "$EXISTING"; then
     echo "  = $n 已在 Release 且大小一致，跳过上传"
@@ -141,7 +166,7 @@ rm -f "$NOTES"
 echo
 echo "=== 验证下载地址 ==="
 # 代理在脚本开头已导出，gh / curl 都靠它
-for f in "${OUTPUTS[@]}"; do
+for f in "${ALL_ASSETS[@]}"; do
   u="https://github.com/$REPO/releases/download/$TAG/${f##*/}"
   code=$(curl -sIL -o /dev/null -w '%{http_code}' "$u" || echo ERR)
   echo "  $code  ${f##*/}"
