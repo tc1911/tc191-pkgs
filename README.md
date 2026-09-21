@@ -74,8 +74,8 @@ pacman 只服务 Arch。其它发行版 / 其它机器需要的是「能直接�
 这份归档发在归档仓库 `tc1911/vtb-bin` 的 Release 里（那是归档位，不当软件源用）：
 
 ```bash
-bash scripts/release_binaries.sh               # 默认 TAG=v0.2.0
-TAG=v0.3.0 bash scripts/release_binaries.sh
+bash scripts/release_binaries.sh               # TAG 默认 = v<UTC 日期>，如 v2026.09.21
+TAG=v0.3.0 bash scripts/release_binaries.sh    # 显式指定版本号
 ```
 
 它**不重新编译**，只把 `dist/` 里已构建的 `.pkg.tar.zst` 拆开、丢掉 pacman 自己的元数据
@@ -89,12 +89,18 @@ sudo tar xzf open-vt-bin-*.tar.gz -C /     # 装法（不进 pacman 数据库）
 > `github.com` 直连不通，脚本开头就把 `HTTPS_PROXY` 导出了（`gh` 和 `curl` 都靠它）；
 > 想换压缩器：`COMPRESSOR=pigz bash scripts/release_binaries.sh`（装过 pigz 快很多）。
 
+> **TAG 的语义**：默认按 UTC 日期归档 —— 同一天重跑复用同一个 Release（幂等），跳天自动另起，
+> 所以新包不会 `--clobber` 掉历史归档；要往某个旧 Release 里补东西就显式 `TAG=v0.2.0`。
+>
+> **对应源码一起发**：`dist/` 里的 `*corresponding-source.tar.zst` 不参与拆包，直接当 Release 附件上传，
+> 并在说明里单列一节（GPL-3 第 6 条义务）。
+
 #### 产物去向
 
 | | 放什么 | 为什么 |
 |---|---|---|
 | **本仓库** `tc191-pkgs` | 配方 + `gh-pages` 上的包 | 配方要跟代码一起演进；产物滚动覆盖，不堆 Release |
-| **归档仓库**（Release 附件）| 通用 tar.gz | 二进制不进 git 历史；非 Arch 用户拿 tar.gz 就能解包 |
+| **归档仓库**（Release 附件）| 通用 tar.gz + GPL 对应源码 | 二进制不进 git 历史；非 Arch 用户拿 tar.gz 就能解包 |
 
 归档仓库只是可选的第二条通道，Github slug 由 `REPO=` 决定（默认 `tc1911/vtb-bin`）：
 
