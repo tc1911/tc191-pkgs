@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 把 dist/ 里已经构建好的 pacman 包，反向打成通用 tar.gz，发到旧仓库的 Release。
+# 把 dist/ 里已经构建好的 pacman 包，反向打成通用 tar.gz，发到归档仓库（tc1911/vtb-bin）的 Release。
 # 用途：pacman 用户走 tc1911.github.io/tc191-pkgs；其它发行版/其它机器可以下这里的
 #       tar.gz，`sudo tar xzf xxx.tar.gz -C /` 就装好了（内容就是包里的 usr/ 树）。
 #
@@ -11,7 +11,7 @@ set -euo pipefail
 
 REPO_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DIST=${DIST:-$REPO_DIR/dist}
-REPO=${REPO:-tc1911/vtb-pkgs}          # 旧仓库
+REPO=${REPO:-tc1911/vtb-bin}           # 归档仓库
 TAG=${TAG:-v0.2.0}
 COMPRESSOR=${COMPRESSOR:-gzip}
 OUT=${OUT:-/tmp/vtb-bin-tarballs}
