@@ -5,8 +5,9 @@
 # 当软件源用会把附件区堆成一堆二进制，乱；而且每次发版都在仓库里多存一份。
 # Pages 直接当静态源更干净，地址也稳定。
 #
-# 分支是**滚动覆盖**的（--force），所以仓库体积不会随发版增长，
-# 始终只有当前这一批包的大小。
+# 提交叠在本地缓存的 gh-pages 之上（增量推送）：git 只传新增/变化的 blob。
+# 以前是每次在 /tmp 里 init 一个全新历史再 --force 推，历史里没得比，每次都 355M 全量重传。
+# 代价：远端历史会累积，仓库体积随发版增长（不变的 blob 会复用，涨得慢）。
 #
 # 用法: bash scripts/publish_pages.sh [--no-build]
 #   --no-build  直接用现有 dist/，不重新生成
@@ -21,11 +22,21 @@ PAGES="https://tc1911.github.io/tc191-pkgs"
 
 [ "${1:-}" = "--no-build" ] || bash "$REPO/scripts/release_github.sh"
 
-# 在独立临时目录里建分支，完全不碰 main 的工作区
-B=$(mktemp -d /tmp/pkgs-publish.XXXXXX)
-trap 'rm -rf "$B"' EXIT
-cp -p "$DIST"/* "$B/"
-touch "$B/.nojekyll"   # 不加这个，Pages 会拿 Jekyll 处理这个纯二进制镜像站
+# 增量发布：本地留一份 gh-pages 克隆做基底（放缓存目录，不碰 main 工作区），
+# 新提交直接叠在远端 head 上，git 只传变化的 blob。
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/tc191-pkgs/gh-pages"
+if [ -d "$CACHE/.git" ]; then
+	git -C "$CACHE" fetch -q --force "$REMOTE" gh-pages
+	git -C "$CACHE" reset -q --hard FETCH_HEAD
+else
+	mkdir -p "$(dirname "$CACHE")"   # git clone 不会替你建父目录
+	git clone -q --branch gh-pages --single-branch "$REMOTE" "$CACHE" 2>/dev/null ||
+		git -C "$CACHE" init -q -b gh-pages   # 远端还没有 gh-pages 分支时的降级
+fi
+# 镜像 dist/ 到工作区：先清掉旧的（保留 .git），再拷新的一批
+find "$CACHE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+cp -p "$DIST"/* "$CACHE/"
+touch "$CACHE/.nojekyll"   # 不加这个，Pages 会拿 Jekyll 处理这个纯二进制镜像站
 
 {
 	cat <<HTML
@@ -41,18 +52,21 @@ Server = ${PAGES}/</pre>
 校验见 <a href="SHA256SUMS">SHA256SUMS</a>。</p>
 <h2>文件</h2><ul>
 HTML
-	for f in $(cd "$B" && ls *.pkg.tar.zst *.tar.zst *.db *.files SHA256SUMS 2>/dev/null | sort -u); do
-		printf '  <li><a href="%s">%s</a> — %s</li>\n' "$f" "$f" "$(du -h "$B/$f" | cut -f1)"
+	for f in $(cd "$CACHE" && ls *.pkg.tar.zst *.tar.zst *.db *.files SHA256SUMS 2>/dev/null | sort -u); do
+		printf '  <li><a href="%s">%s</a> — %s</li>\n' "$f" "$f" "$(du -h "$CACHE/$f" | cut -f1)"
 	done
 	echo '</ul><p><a href="https://github.com/tc1911/tc191-pkgs">源码与配方</a></p>'
-} > "$B/index.html"
+} > "$CACHE/index.html"
 
-VER=$(cd "$B" && ls *.pkg.tar.zst | sed 's/^.*-\([0-9][^-]*-[0-9]*\)-x86_64.*/\1/' | tr '\n' ' ')
-git -C "$B" init -q -b gh-pages
-git -C "$B" add -A -f
-git -C "$B" commit -q -m "发布包: $VER"
-echo "== 推送 gh-pages（$(du -sh --exclude=.git "$B" | cut -f1)）=="
-git -C "$B" push --force "$REMOTE" gh-pages 2>&1 | sed 's/^/  /'
+VER=$(cd "$CACHE" && ls *.pkg.tar.zst | sed 's/^.*-\([0-9][^-]*-[0-9]*\)-x86_64.*/\1/' | tr '\n' ' ')
+git -C "$CACHE" add -A -f
+if git -C "$CACHE" diff --cached --quiet; then
+	echo "== 内容和远端一致，没什么可推的 =="
+else
+	git -C "$CACHE" commit -q -m "发布包: $VER"
+	echo "== 推送 gh-pages（工作区 $(du -sh --exclude=.git "$CACHE" | cut -f1)，只传增量）=="
+	git -C "$CACHE" push "$REMOTE" gh-pages 2>&1 | sed 's/^/  /'
+fi
 
 echo
 echo "================ 源地址 ================"
