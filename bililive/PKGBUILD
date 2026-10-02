@@ -1,7 +1,7 @@
 # Maintainer: tc1911 <171405782+tc1911@users.noreply.github.com>
-# 源码包：从私有仓的 tag 拉源码，用 cargo 编译。
-# 仓库是私有的，所以 source 走 ssh（本机 ~/.ssh/config 里 github.com 指向
-# ssh.github.com + 一个 ProxyCommand，不用再配代理）；crates 走
+# 源码包：从 GitHub 的 tag 拉源码，用 cargo 编译。
+# 仓库已公开，source 走 https；本机 github.com 直连不通，所以 makepkg 取源码那一步
+# 得靠 https_proxy（见同目录的 make_bililive_pkg.sh）。crates 走
 # ~/.cargo/config.toml 里那个 rsproxy 镜像 —— 打包**不要**去动那个文件。
 pkgname=bililive
 pkgver=0.1.0
@@ -19,7 +19,7 @@ makedepends=('cargo' 'rust' 'git')
 # 就被编成 LTO 目标文件，而最后 rustc 那次链接不带 `-flto`，
 # 于是 `aws_lc_0_45_0_*` 全成了未定义符号、链接期报一屏。
 options=('!debug' '!lto')
-source=("$pkgname::git+ssh://git@github.com/tc1911/bililive.git#tag=v$pkgver")
+source=("$pkgname::git+https://github.com/tc1911/bililive.git#tag=v$pkgver")
 # git 源没有稳定的校验和，按 Arch 的规矩写 SKIP（tag 就是那根钉子）
 sha256sums=('SKIP')
 
