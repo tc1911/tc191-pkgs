@@ -33,7 +33,10 @@ sudo pacman -S open-vt-bin        # 例如
 | `openseeface` | OpenSeeFace 面捕（facetracker） |
 | `psd2live-bin` | psd2live：PSD → Live2D 自动绑定的桌面版 |
 | `auto-vtb-bin` | Auto_Vtb：psd2live 的下游版（自动绑定 + 导出 + 内置 MCP，**自带 JRE**）|
-| `bilibili-live-tui-plus` | Bilibili 直播弹幕 TUI 客户端（扫码登录 / 分区选择 / 开播取推流码）|
+| `bililive` | Bilibili 直播弹幕 TUI 客户端，Rust 重写版（弹幕 / 扫码登录 / 分区 / 开播取推流码 / OBS 联动）|
+
+> `bilibili-live-tui-plus`（Go 版）2026-10-03 起停更，被 `bililive` 取代：
+> 配方留在目录里当参照物，产物不再进源（`pacman -Syu` 会把这个包从源上带走）。
 
 补丁明细见 `docs/PATCHES.md`。
 
@@ -45,7 +48,7 @@ sudo pacman -S open-vt-bin        # 例如
 bash open-vt-bin/make_openvt_pkg.sh     # → /home/tc191/vtb/归档/open-vt-bin/
 bash psd2live-bin/make_psd2live_pkg.sh  # → /home/tc191/vtb/归档/psd2live-bin/
 bash auto-vtb-bin/make_auto_vtb_pkg.sh  # → /home/tc191/vtb/归档/auto-vtb-bin/（先构建 app image）
-bash bilibili-live-tui-plus/make_bilibili_live_tui_plus_pkg.sh  # → /home/tc191/vtb/归档/bilibili-live-tui-plus/
+bash bililive/make_bililive_pkg.sh      # → /home/tc191/vtb/归档/bililive/（GitHub 上得先有对应 tag）
 cd openseeface && makepkg -f            # → /home/tc191/opt/openvt-pkg/openseeface/
 ```
 
