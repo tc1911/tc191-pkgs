@@ -34,6 +34,7 @@ sudo pacman -S open-vt-bin        # 例如
 | `psd2live-bin` | psd2live：PSD → Live2D 自动绑定的桌面版 |
 | `auto-vtb-bin` | Auto_Vtb：psd2live 的下游版（自动绑定 + 导出 + 内置 MCP，**自带 JRE**）|
 | `bililive` | Bilibili 直播弹幕 TUI 客户端，Rust 重写版（弹幕 / 扫码登录 / 分区 / 开播取推流码 / OBS 联动）|
+| `open-frp-cross-platform-launcher` | [OpenFrp CPL](https://github.com/ZGIT-Network/OpenFrp-CrossPlatformLauncher) 跨平台 frpc 启动器（Rust + Tauri 2）。重打包上游 `.deb`，**许可证是 Apache-2.0 + Commons Clause，仅限非商业** |
 
 > `bilibili-live-tui-plus`（Go 版）2026-10-03 起停更，被 `bililive` 取代：
 > 配方留在目录里当参照物，产物不再进源（`pacman -Syu` 会把这个包从源上带走）。
@@ -49,6 +50,7 @@ bash open-vt-bin/make_openvt_pkg.sh     # → /home/tc191/vtb/归档/open-vt-bin
 bash psd2live-bin/make_psd2live_pkg.sh  # → /home/tc191/vtb/归档/psd2live-bin/
 bash auto-vtb-bin/make_auto_vtb_pkg.sh  # → /home/tc191/vtb/归档/auto-vtb-bin/（先构建 app image）
 bash bililive/make_bililive_pkg.sh      # → /home/tc191/vtb/归档/bililive/（GitHub 上得先有对应 tag）
+bash open-frp-cross-platform-launcher/make_openfrp_pkg.sh  # → /home/tc191/vtb/归档/open-frp-cross-platform-launcher/（重打包上游 deb）
 cd openseeface && makepkg -f            # → /home/tc191/opt/openvt-pkg/openseeface/
 ```
 

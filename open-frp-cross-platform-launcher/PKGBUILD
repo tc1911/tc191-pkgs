@@ -1,0 +1,37 @@
+# Maintainer: tc191
+#
+# 上游（ZGIT-Network/OpenFrp-CrossPlatformLauncher）只发 .deb / .rpm / AppImage，
+# 没有 Arch 包，所以这里只做**重打包**：拆出 deb 里的 data.tar.gz 直接铺到 $pkgdir，
+# 不重编、不打补丁。上游发新版本时改 pkgver + sha256sums 即可。
+#
+# 许可证是 Apache-2.0 **加了一条 Commons Clause 附加限制**（禁止商用，含 SaaS），
+# 实测文件尾部那节 "Additional Commons Clause Restriction"，所以 license 写 custom，
+# 并把 LICENSE 原文装进 /usr/share/licenses/。自己用/非商业分发没问题。
+#
+# 依赖按 ldd 实测写：主程序直接链的是 gtk3 / webkit2gtk-4.1 这一层，其余
+# （pango、gdk-pixbuf2、gstreamer、libsecret、glycin 等）都由这两个带进来。
+# 托盘图标是运行时 dlopen libayatana-appindicator3.so.1，缺了只是没托盘 → optdepends。
+pkgname=open-frp-cross-platform-launcher
+pkgver=0.9.1
+pkgrel=1
+pkgdesc="OpenFrp 跨平台启动器（Rust + Tauri 2 + NaiveUI）"
+arch=('x86_64')
+url="https://github.com/ZGIT-Network/OpenFrp-CrossPlatformLauncher"
+license=('custom:Apache-2.0-with-Commons-Clause')
+depends=('glibc' 'gcc-libs' 'gtk3' 'webkit2gtk-4.1')
+optdepends=('libayatana-appindicator: 系统托盘图标（缺失不影响主界面）'
+            'xdg-utils: 用系统浏览器打开链接')
+options=('!strip')
+source=("https://github.com/ZGIT-Network/OpenFrp-CrossPlatformLauncher/releases/download/v${pkgver}/OpenFrp-CrossPlatformLauncher_${pkgver}_amd64.deb"
+        'LICENSE')
+sha256sums=('43e661485b57a5339377d5d5761499886fed0878065c37090afdc804888ab9f1'
+            'a9c407973b40d71b338e096c5c77b2397e2fdba86eb93d3beeeff626e015da45')
+
+package() {
+	# deb 是个 ar 归档：debian-binary + control.tar.gz + data.tar.gz。
+	# 只要 data.tar.gz，里面就是完整的 usr/ 树（含 /usr/bin/openfrp_cpl、图标、桌面项）。
+	bsdtar -xf "$srcdir/OpenFrp-CrossPlatformLauncher_${pkgver}_amd64.deb" -C "$srcdir" data.tar.gz
+	bsdtar -xf "$srcdir/data.tar.gz" -C "$pkgdir"
+
+	install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
