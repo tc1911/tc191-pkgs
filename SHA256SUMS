@@ -1,7 +1,6 @@
-38ce6b0737cd53047afa3b1fc67692b200b9ad346dba3418e7f2aff5c5fd47f0  ./auto-vtb-bin-0.6.0.r5.1e1d267.local-1-x86_64.pkg.tar.zst
 b3c8370330e09fe914f2e236a992a4a20d6f62b1c127246344a0bd64f3adac1d  ./bililive-0.1.0-1-x86_64.pkg.tar.zst
 a7ad6a1342fa0f688828dff39d6e0a1c1c15b79c04130df67be2d22ce95f055d  ./open-frp-cross-platform-launcher-0.9.1-1-x86_64.pkg.tar.zst
 65472d0a8a53090c6b958793fec3e076871dde40bafedf4f2018cbcf8a7b0a98  ./openseeface-1.20.5-2-x86_64.pkg.tar.zst
-fe58bbae22230af467524af00194b32281368a7830e44a6e3f96c2fb86190a55  ./open-vt-bin-0.1.0.r1.4919304-2-x86_64.pkg.tar.zst
-4b55dd9d100d09c9abb13ab19e1ad7adf8e72b478aea8b13726b05d0685cd89a  ./psd2live-bin-0.7.1.r1.c8ad876-1-x86_64.pkg.tar.zst
-1f6c1b1f9418004911ee12aa486e78a7e1c7fe23d1a9b6d82021a88c699626a6  ./psd2live-0.7.1.r1.c8ad876-corresponding-source.tar.zst
+805fef65784133a0b817c7258ffc6e7321d44b8c23dc0882c3f587e5d92e32c3  ./open-vt-bin-0.1.0.r15.89f2f0f-2-x86_64.pkg.tar.zst
+84bcd868caa69b4d9dc3d9bf760db79102145e39f37a8265b93bea3f862137f6  ./psd2live-bin-2.0.4.r1.506156c-1-x86_64.pkg.tar.zst
+e2fa993dea3141cb503f6a191da26811c0296f2e7b338d93661a9015b7fbc4df  ./psd2live-2.0.4.r1.506156c-corresponding-source.tar.zst
