@@ -31,13 +31,16 @@ sudo pacman -S open-vt-bin        # 例如
 |---|---|
 | `open-vt-bin` | [OpenVT](https://github.com/erodozer/open-vt) 虚拟主播软件。打了补丁：虚拟摄像头输出、双摄支持 |
 | `openseeface` | OpenSeeFace 面捕（facetracker） |
-| `psd2live-bin` | psd2live：PSD → Live2D 自动绑定的桌面版 |
-| `auto-vtb-bin` | Auto_Vtb：psd2live 的下游版（自动绑定 + 导出 + 内置 MCP，**自带 JRE**）|
+| `psd2live-bin` | psd2live：PSD → Live2D 自动绑定的桌面版（2.0 起上游自带 MCP，**自带 JRE**）|
 | `bililive` | Bilibili 直播弹幕 TUI 客户端，Rust 重写版（弹幕 / 扫码登录 / 分区 / 开播取推流码 / OBS 联动）|
 | `open-frp-cross-platform-launcher` | [OpenFrp CPL](https://github.com/ZGIT-Network/OpenFrp-CrossPlatformLauncher) 跨平台 frpc 启动器（Rust + Tauri 2）。重打包上游 `.deb`，**许可证是 Apache-2.0 + Commons Clause，仅限非商业** |
 
 > `bilibili-live-tui-plus`（Go 版）2026-10-03 起停更，被 `bililive` 取代：
 > 配方留在目录里当参照物，产物不再进源（`pacman -Syu` 会把这个包从源上带走）。
+>
+> `auto-vtb-bin` 2026-10-05 起下架：Auto_Vtb 是 psd2live 的下游衍生版，选它的唯一理由是内置
+> MCP 服务；psd2live 2.0（`psd2live-bin`）上游已内置 MCP，改用上游，不再维护下游包。
+> 配方目录已删除，产物留在归档处。
 
 补丁明细见 `docs/PATCHES.md`。
 
@@ -48,7 +51,6 @@ sudo pacman -S open-vt-bin        # 例如
 ```bash
 bash open-vt-bin/make_openvt_pkg.sh     # → /home/tc191/vtb/归档/open-vt-bin/
 bash psd2live-bin/make_psd2live_pkg.sh  # → /home/tc191/vtb/归档/psd2live-bin/
-bash auto-vtb-bin/make_auto_vtb_pkg.sh  # → /home/tc191/vtb/归档/auto-vtb-bin/（先构建 app image）
 bash bililive/make_bililive_pkg.sh      # → /home/tc191/vtb/归档/bililive/（GitHub 上得先有对应 tag）
 bash open-frp-cross-platform-launcher/make_openfrp_pkg.sh  # → /home/tc191/vtb/归档/open-frp-cross-platform-launcher/（重打包上游 deb）
 cd openseeface && makepkg -f            # → /home/tc191/opt/openvt-pkg/openseeface/
@@ -61,7 +63,7 @@ bash scripts/publish_pages.sh           # 生成 dist/ → 推 gh-pages → 打�
 bash scripts/publish_pages.sh --no-build # 直接用现有 dist/
 ```
 
-`publish_pages.sh` 会先调 `release_github.sh`：收集四个包 → `repo-add` 生成仓库索引 →
+`publish_pages.sh` 会先调 `release_github.sh`：收集 `PKGDIRS` 里每个产包目录的 `.pkg.tar.zst` → `repo-add` 生成仓库索引 →
 校验索引里的 SHA256/CSIZE 与实际文件一致 → 生成 GPL 义务要求的 corresponding-source
 → 写 `SHA256SUMS`；然后把这一整套推到 `gh-pages` 分支（滚动 `--force` 覆盖）。
 

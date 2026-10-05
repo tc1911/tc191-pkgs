@@ -1,3 +1,14 @@
+# psd2live 构建补丁（2.0.4 版，基准 tag v2.0.4 / 提交 506156c）
+#
+# 与 0.7.1 版相比的变化：
+#   - hunk 1（gradle 发行包换腾讯镜像）保留：2.0.4 的 distributionUrl 仍指向 services.gradle.org。
+#   - 旧 hunk 2（gradlew 执行位 100644→100755）废弃：上游 2.0.4 的 gradlew 已是 100755。
+#   - 旧 hunk 3（RigBuilder.kt RuntimeTarget.Cubism50→Ayagami）废弃：2.0.4 已把 runtimeTarget
+#     改为读 config（RigBuilder.kt:968），且 Ayagami 与 Cubism50 完全等价（cubismLevel 均 50、
+#     同映射到 MocVersion.V50 / Cmo3TargetVersion.V50）。默认 Cubism50 产物经实测能被 OpenVT 加载。
+#   - hunk 4（Moc3RenderOrderLowering.kt groupIndex 0→-1）保留：上游仍写 0；MOC3 §5.6 要求
+#     ArtMesh 叶子节点 groupIndex = -1。
+#
 diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
 index a9db115..8f73496 100644
 --- a/gradle/wrapper/gradle-wrapper.properties
@@ -10,22 +21,6 @@ index a9db115..8f73496 100644
  networkTimeout=10000
  retries=0
  retryBackOffMs=500
-diff --git a/gradlew b/gradlew
-old mode 100644
-new mode 100755
-diff --git a/src/main/kotlin/io/github/psd2live/core/RigBuilder.kt b/src/main/kotlin/io/github/psd2live/core/RigBuilder.kt
-index f4d6c1e..cc22952 100644
---- a/src/main/kotlin/io/github/psd2live/core/RigBuilder.kt
-+++ b/src/main/kotlin/io/github/psd2live/core/RigBuilder.kt
-@@ -532,7 +532,7 @@ object RigBuilder {
- 			// Cubism 5.0/MOC v5 is the compatibility baseline.  The generated rig does not use any
- 			// 5.3-only feature, and targeting v5 keeps it readable by both current Viewer releases and
- 			// older Cubism 5 runtimes without relying on v6-only container fields.
--			runtimeTarget = RuntimeTarget.Cubism50,
-+			runtimeTarget = RuntimeTarget.Ayagami,
- 		).withDerivedRenderRoot()
- 		val faceCenterCanvas = faceRig.coordinateSpace.toCanvas(faceRig.centerX, faceRig.centerY)
- 		return BuiltRig(
 diff --git a/src/main/kotlin/org/umamo/interop/moc3/export/Moc3RenderOrderLowering.kt b/src/main/kotlin/org/umamo/interop/moc3/export/Moc3RenderOrderLowering.kt
 index f39183d..3a6b43b 100644
 --- a/src/main/kotlin/org/umamo/interop/moc3/export/Moc3RenderOrderLowering.kt

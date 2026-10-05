@@ -2,8 +2,8 @@
 # 生成 psd2live 的「对应源码」（GPL-3.0 第 6 条要求的 Corresponding Source）。
 #
 # 为什么必须单独做：psd2live-bin 不是上游原样二进制 —— 构建它的工作树相对上游
-# 提交 c8ad876 有改动（RigBuilder.kt / Moc3RenderOrderLowering.kt /
-# gradle-wrapper.properties 各一行，外加 gradlew 的权限位）。GPL-3 要求在分发目标
+# 提交 506156c（tag v2.0.4）有改动（gradle-wrapper.properties 与
+# Moc3RenderOrderLowering.kt 各一行）。GPL-3 要求在分发目标
 # 代码时提供**实际用于构建的那份源码**，只给上游仓库链接不满足该义务。
 #
 # 产出: dist/psd2live-<ver>.r1.<commit>-corresponding-source.tar.zst
@@ -12,8 +12,8 @@
 # 用法: bash scripts/make_corresponding_source.sh
 set -euo pipefail
 
-TREE=/home/tc191/opt/probe-psd2live/psd2live
-PATCH=/home/tc191/opt/psd2live-groupindex-fix.patch
+TREE=/home/tc191/opt/psd2live-2.0.4
+PATCH=/home/tc191/项目/tc191-pkgs/patches/psd2live-groupindex-fix.patch
 # 仓库根目录从脚本自身位置推导（本脚本在 <root>/scripts/ 下）
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="$REPO/dist"

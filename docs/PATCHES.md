@@ -3,12 +3,17 @@
 本机是 Intel Arc（XPU / Level Zero），不是 CUDA。下面每条都是「不加就出错的」改动。
 
 ## 1. psd2live（PSD → .cmo3/.moc3 转换器）
-- 位置：`~/opt/probe-psd2live/psd2live`
-- 补丁：`~/opt/psd2live-groupindex-fix.patch`（4 处，关键 1 处）
-- **关键那条**：`Moc3RenderOrderLowering.kt` 里 ArtMesh 叶子的 `groupIndex` 写成 `0`，官方 Cubism 写 `-1`。
+- 位置：`~/opt/psd2live-2.0.4`（tag `v2.0.4` / commit `506156c`）
+- 补丁：`~/项目/tc191-pkgs/patches/psd2live-groupindex-fix.patch`（2.0.4 版，只剩 2 处；`~/opt/psd2live-groupindex-fix.patch` 是它的符号链接）
+- **关键那条**：`Moc3RenderOrderLowering.kt:50` 里 ArtMesh 叶子的 `groupIndex` 写成 `0`，官方 Cubism 写 `-1`。
   不修 → OpenVT 加载时 panic：`ValidationError("$obj", 0, "self.i_draw_group().get().is_none()")`
-- 其余 3 处是构建适配：gradle 发行包走腾讯镜像、gradlew 可执行位、`RuntimeTarget` 选 Ayagami
-- 跑它：`bash ~/opt/psd2live-run.sh <输入.psd> <输出目录>`（内部用 JAVA_HOME=/usr/lib/jvm/zulu-21）
+  （**不崩进程**，只是模型加载不出来）。
+- 另一处是构建适配：gradle 发行包走腾讯镜像（`gradle-wrapper.properties`，纯下载加速，与正确性无关）。
+- 2026-10-05 相对 0.7.1 废弃的 2 个 hunk：`gradlew` 可执行位（上游已 100755）、
+  `RigBuilder.kt` 的 `RuntimeTarget`（2.0 改成配置项 `runtimeTarget` 驱动，默认 `Cubism50`，与 `Ayagami` 等价）。
+- 跑它：`bash ~/opt/psd2live-run.sh <输入.psd> <输出目录>`（内部用 JAVA_HOME=/usr/lib/jvm/zulu-21）。
+  **CLI 管道不建骨架** → 模型没有 `ParamTail1..4`、尾巴不会动；要尾巴走 `PSD2LIVE_MODE=gui`
+  （内部调 `~/opt/mcp_skeleton_export.sh`，GUI + MCP 的 `skeleton auto`）。
 
 ## 2. ComfyUI 的 See-through 插件（自动拆层）
 - 位置：`~/opt/ComfyUI/custom_nodes/ComfyUI-See-through`

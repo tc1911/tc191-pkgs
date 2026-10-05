@@ -29,7 +29,9 @@ PKGS=()
 # 每加一个包只需在这里添一行目录
 # bilibili-live-tui-plus（Go 版）2026-10-03 下架，被 bililive（Rust 重写版）取代：
 # 配方留在同目录里做参照，产物不再收进源。
-PKGDIRS=("$OUT/open-vt-bin" "$OUT/psd2live-bin" "$OUT/auto-vtb-bin" "$OUT/bililive" "$OUT/open-frp-cross-platform-launcher" "$OPENSEEFACE_DIR")
+# auto-vtb-bin 2026-10-05 下架：Auto_Vtb 是 psd2live 的下游衍生版，选它的唯一理由是内置
+# MCP 服务；psd2live 2.0 上游已内置 MCP（26 个工具），改用上游，不再维护下游包。
+PKGDIRS=("$OUT/open-vt-bin" "$OUT/psd2live-bin" "$OUT/bililive" "$OUT/open-frp-cross-platform-launcher" "$OPENSEEFACE_DIR")
 for d in "${PKGDIRS[@]}"; do
 	for f in "$d"/*.pkg.tar.zst; do
 		install -m644 "$f" "$DIST/"

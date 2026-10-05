@@ -8,15 +8,16 @@
 #     不能做符号链接（符号链接会让它去 /usr/lib 找，直接起不来）
 set -euo pipefail
 
-SRC=/home/tc191/opt/probe-psd2live/psd2live
+SRC=/home/tc191/opt/psd2live-2.0.4
 APP="$SRC/build/compose/binaries/main/app/PSD2Live"
 OUT=/home/tc191/vtb/归档/psd2live-bin
 STAGE=/tmp/psd2live-stage
-V=0.7.1
+V=2.0.4
 
 if [ ! -x "$APP/bin/PSD2Live" ]; then
 	echo "缺少 app image。先跑："
 	echo "  cd $SRC && JAVA_HOME=/usr/lib/jvm/zulu-21 ./gradlew --no-daemon createDistributable"
+	echo "  （构建前确认已打补丁：git -C $SRC apply <repo>/patches/psd2live-groupindex-fix.patch）"
 	exit 1
 fi
 
@@ -62,7 +63,7 @@ echo "== 3/4 写 PKGBUILD =="
 P=/tmp/psd2live-pkgbuild; rm -rf "$P"; mkdir -p "$P"
 cp "$OUT/psd2live-$PKGVER.tar.zst" "$P/"
 cat > "$P/PKGBUILD" <<PKGBUILD
-# 由 /home/tc191/opt/make_psd2live_pkg.sh 生成
+# 由 tc191-pkgs/psd2live-bin/make_psd2live_pkg.sh 生成
 pkgname=psd2live-bin
 pkgver=$PKGVER
 pkgrel=1

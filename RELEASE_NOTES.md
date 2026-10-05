@@ -1,39 +1,42 @@
-# v0.1.0 — OpenVT + 面捕后端 + PSD2Live 的首个打包版
+# 2026-10-05 — psd2live 升到 2.0.4、open-vt 跟进上游、Auto_Vtb 退役
 
-把三个上游项目打成本地 pacman 包，装完就能跑原生 Live2D VTuber。
+本次是一个大版本：psd2live 从 0.7.1 跳到 2.0.4（上游自带 MCP，于是下架了下游包 `auto-vtb-bin`），
+open-vt 跟进上游 `89f2f0f`（VRM/XR 追踪大改），并重新生成了 GPL 对应源码。
+
+## 包一览
 
 | 包 | 上游 | 版本 | 说明 |
 |---|---|---|---|
-| `open-vt-bin` | [erodozer/open-vt](https://github.com/erodozer/open-vt) | `4919304` | 原生 VTuber 应用（Godot + ayagami 直接解析 moc3）。含桌面项与两个 systemd 用户单元 |
-| `openseeface` | [emilianavt/OpenSeeFace](https://github.com/emilianavt/OpenSeeFace) | v1.20.5 | 面捕后端，提供 `/usr/bin/facetracker`（模型随包） |
-| `psd2live-bin` | [tsunehimatoi/psd2live](https://github.com/tsunehimatoi/psd2live) | `0.7.1.r1.c8ad876` | PSD → 可绑定 Live2D 的 GUI（Compose Desktop 自带 JRE，MCP 服务监听 127.0.0.1:23871） |
+| `open-vt-bin` | [erodozer/open-vt](https://github.com/erodozer/open-vt) | `0.1.0.r15.89f2f0f-2` | 原生 VTuber 应用（Godot + ayagami 直接解析 moc3）。含桌面项与两个 systemd 用户单元 |
+| `openseeface` | [emilianavt/OpenSeeFace](https://github.com/emilianavt/OpenSeeFace) | `1.20.5-2` | 面捕后端，提供 `/usr/bin/facetracker`（模型随包） |
+| `psd2live-bin` | [tsunehimatoi/psd2live](https://github.com/tsunehimatoi/psd2live) | `2.0.4.r1.506156c-1` | PSD → Live2D 的 GUI（Compose Desktop 自带 JRE；内置 MCP 服务监听 `127.0.0.1:23871`） |
+| `bililive` | — | `0.1.0-1` | Bilibili 直播弹幕 TUI 客户端（Rust 重写版） |
+| `open-frp-cross-platform-launcher` | [ZGIT-Network/OpenFrp-CrossPlatformLauncher](https://github.com/ZGIT-Network/OpenFrp-CrossPlatformLauncher) | `0.9.1-1` | 跨平台 frpc 启动器（重打包上游 deb） |
+
+**已下架：`auto-vtb-bin`（2026-10-05）。** Auto_Vtb 是 psd2live 的下游衍生版，
+选它的唯一理由是内置 MCP 服务；psd2live 2.0 上游已内置 MCP（26 个工具），
+改用上游，不再维护下游包。配方目录已删除，`pacman -Syu` 会把它从源上带走。
 
 ## 安装
 
 ```bash
-# 1) 追加到 /etc/pacman.conf 末尾
-[vtb]
+# 追加到 /etc/pacman.conf 末尾
+[tc191]
 SigLevel = Optional TrustAll
-Server = https://github.com/tc1911/vtb-bin/releases/latest/download
+Server = https://tc1911.github.io/tc191-pkgs/
 
-# 2) 整体更新（别只 -Sy）
+# 整体更新（别只 -Sy）
 sudo pacman -Syu
 
-# 3) 安装
+# 安装
 sudo pacman -S open-vt-bin openseeface psd2live-bin
-```
-
-国内直连 GitHub 不稳的话，`Server` 换成 gh-proxy 前缀即可：
-
-```
-Server = https://gh-proxy.com/https://github.com/tc1911/vtb-bin/releases/latest/download
 ```
 
 `SigLevel = Optional TrustAll` 是因为这个仓库不做 gpg 签名。请只在你信任本仓库内容的前提下使用。
 
 ## 校验
 
-每个 Release 附带 `SHA256SUMS`，覆盖全部三个 `.pkg.tar.zst` 以及对应源码归档：
+每个发布都带 `SHA256SUMS`，覆盖全部 `.pkg.tar.zst` 以及 psd2live 的对应源码归档：
 
 ```bash
 cd /var/cache/pacman/pkg   # 或你下载的目录
@@ -46,25 +49,35 @@ sha256sum -c SHA256SUMS
 |---|---|---|
 | open-vt | MIT（含 Godot 引擎 MIT）+ `license/` 下四个第三方许可 | 否 |
 | OpenSeeFace | BSD-2（代码**与模型**）+ `Licenses/` 下 12 个第三方库许可 | 否 |
-| psd2live | GPL-3.0-only | **是**，3 行 |
+| psd2live | GPL-3.0-only | **是，2 行** |
+| OpenFrp-CrossPlatformLauncher | Apache-2.0 + Commons Clause（**仅限非商业**） | 否（重打包 deb） |
 
-`psd2live-bin` 不是上游原样构建：构建时工作树相对 `c8ad876` 有 3 行改动
-（`RigBuilder.kt`、`Moc3RenderOrderLowering.kt`、`gradle/wrapper/gradle-wrapper.properties`，
-外加 `gradlew` 权限位），目的是让导出的 moc3 通过 OpenVT 的严格校验。
+`psd2live-bin` 不是上游原样二进制：构建时工作树相对 `v2.0.4`（`506156c`）有 2 处改动 ——
+`Moc3RenderOrderLowering.kt` 的 ArtMesh 叶子 `groupIndex`（`0` → `-1`，不改 OpenVT 会拒载模型）、
+`gradle-wrapper.properties` 的下载镜像（只影响构建速度）。
+（0.7.1 时代还需要改 `RigBuilder.kt` 与 `gradlew` 权限位，2.0.4 上游已自洽，不需要了。）
 
-按 GPL-3 第 6 条，本 Release 同时提供**对应源码**：
+按 GPL-3 第 6 条，同时提供**对应源码**：
 
 ```
-psd2live-0.7.1.r1.c8ad876-corresponding-source.tar.zst
+psd2live-2.0.4.r1.506156c-corresponding-source.tar.zst
 ```
 
-内含 `git archive c8ad876` 的完整源码树 + 覆盖上述改动后的文件 + 补丁副本 +
+内含 `git archive 506156c` 的完整源码树 + 覆盖上述改动后的文件 + 补丁副本 +
 `README-corresponding-source.txt`（上游地址、基准提交、改动清单、重建命令）。
 
 各包的许可证都装到 `/usr/share/licenses/<pkgname>/`。
 
 > 本仓库不包含任何 Live2D 模型。OpenVT 上游声明它是 *"built in Godot with entirely open source
 > solutions"*，未链接 Cubism SDK，因此不涉及 Live2D 的 SDK 授权条款。
+
+## psd2live 2.0 的两点变化
+
+1. **内置 MCP**：GUI 起来后 `127.0.0.1:23871/mcp`，`asset` / `skeleton` / `swing` / `export` 等 26 个工具。
+   token 从 `~/.java/.userPrefs/io/github/psd2live/agent/prefs.xml` 取。
+2. **尾巴摆动要建骨架**：CLI 管道（`--input`）不建骨架，出的模型只有约 20 个参数、没有尾巴；
+   要 `ParamTail1..4` / `ParamSkelTailSwing` 和摆锤链，必须走 GUI/MCP 的 `skeleton auto`。
+   这是上游行为，不是本包的改动。
 
 ## 已知坑
 
@@ -86,7 +99,8 @@ psd2live-0.7.1.r1.c8ad876-corresponding-source.tar.zst
 
 ```bash
 ./open-vt-bin/make_openvt_pkg.sh      # 需要一份已编译的 OpenVT 构建树
-./psd2live-bin/make_psd2live_pkg.sh   # 需要 psd2live 源码树 + gradle
+./psd2live-bin/make_psd2live_pkg.sh   # 需要 psd2live 2.0.4 源码树 + gradle（先 createDistributable）
 cd openseeface && makepkg -f
 ./scripts/release_github.sh           # 汇总 dist/ + repo-add + 生成对应源码 + SHA256SUMS
+./scripts/publish_pages.sh            # 推 gh-pages
 ```
