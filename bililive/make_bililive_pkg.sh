@@ -31,6 +31,10 @@ done
 
 mkdir -p "$SRCDEST"
 cd "$HERE"
+# 配方目录里上一次发版留下的包必须先清掉：makepkg -f 只写新版本的那个文件，
+# 旧包会一直躺在原地，最后 `install ./*.pkg.tar.zst` 就把它一起搬进归档，
+# release_github.sh 看到「一个目录两个包」会直接退场。
+rm -f "$HERE"/*.pkg.tar.zst
 makepkg -f
 
 # 归档目录必须只留本次产物：release_github.sh 按「一个目录一个包」计数，

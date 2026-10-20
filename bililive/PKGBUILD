@@ -4,15 +4,21 @@
 # 得靠 https_proxy（见同目录的 make_bililive_pkg.sh）。crates 走
 # ~/.cargo/config.toml 里那个 rsproxy 镜像 —— 打包**不要**去动那个文件。
 pkgname=bililive
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
-pkgdesc='Bilibili 直播弹幕 TUI 客户端（Rust 版：弹幕 / 扫码登录 / 分区 / 开播推流码 / OBS 联动）'
+pkgdesc='Bilibili 直播弹幕 TUI 客户端（Rust 版：弹幕 / 扫码登录 / 分区 / 开播推流码 / OBS 联动 / 桌面浮层）'
 arch=('x86_64')
 url='https://github.com/tc1911/bililive'
 license=('GPL-2.0-only')
 # 纯 Rust：只要 glibc 和 libgcc_s。TLS 走 rustls + 内置根证书，所以
 # **不需要** openssl / ca-certificates —— 别照抄 Go 版那两行。
 depends=('glibc' 'gcc-libs')
+# 都是可选的：没有 espeak-ng 照样能跑（[tts] 默认关），没有中文字体时
+# 浮层会退回 DejaVu（中文画不出来）。wayland 是 dlopen 的，不写进 depends。
+optdepends=(
+	'espeak-ng: 打赏朗读的默认命令（[tts] 里可以换成任意命令）'
+	'noto-fonts-cjk: 桌面浮层的中文显示'
+)
 makedepends=('cargo' 'rust' 'git')
 # `!lto` 不是随手加的：makepkg 的 OPTIONS 默认开 lto，会往 CFLAGS 里塞
 # `-flto=auto`，aws-lc-sys 那个 C 静态库（reqwest → rustls → aws-lc-rs 拉进来的）
@@ -47,5 +53,6 @@ check() {
 package() {
 	cd "$_srcname"
 	install -Dm755 target/release/bililive "$pkgdir/usr/bin/bililive"
+	install -Dm755 target/release/bililive-overlay "$pkgdir/usr/bin/bililive-overlay"
 	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
