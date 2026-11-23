@@ -1,7 +1,7 @@
 pkgbase = frpc-gui
 	pkgdesc = frpc 的图形前端（GPUI）：主页启停隧道，守护进程常驻
 	pkgver = 0.1.0
-	pkgrel = 1
+	pkgrel = 2
 	url = https://github.com/tc1911/frpc-gui
 	arch = x86_64
 	license = MIT
