@@ -12,7 +12,7 @@
 # （pango、gdk-pixbuf2、gstreamer、libsecret、glycin 等）都由这两个带进来。
 # 托盘图标是运行时 dlopen libayatana-appindicator3.so.1，缺了只是没托盘 → optdepends。
 pkgname=open-frp-cross-platform-launcher
-pkgver=0.9.1
+pkgver=0.9.2
 pkgrel=1
 pkgdesc="OpenFrp 跨平台启动器（Rust + Tauri 2 + NaiveUI）"
 arch=('x86_64')
@@ -24,7 +24,7 @@ optdepends=('libayatana-appindicator: 系统托盘图标（缺失不影响主界
 options=('!strip')
 source=("https://github.com/ZGIT-Network/OpenFrp-CrossPlatformLauncher/releases/download/v${pkgver}/OpenFrp-CrossPlatformLauncher_${pkgver}_amd64.deb"
         'LICENSE')
-sha256sums=('43e661485b57a5339377d5d5761499886fed0878065c37090afdc804888ab9f1'
+sha256sums=('98fbed5952b8ad6266bcaa5a555c3a92c7eae6901ef1d7bdb4a8ac267cf4dbbb'
             'a9c407973b40d71b338e096c5c77b2397e2fdba86eb93d3beeeff626e015da45')
 
 package() {

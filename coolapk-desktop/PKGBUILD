@@ -1,0 +1,44 @@
+# Maintainer: tc191
+#
+# 上游（daimiaopeng/coolapk-desktop）只发 .deb / .rpm / AppImage，没有 Arch 包，
+# 所以这里只做**重打包**：拆出 deb 里的 data.tar.gz 直接铺到 $pkgdir，
+# 不重编、不打补丁。上游发新版本时改 pkgver + sha256sums 即可。
+#
+# 为什么不用官方 AppImage 重打：那个 84M 的 AppImage 是 linuxdeploy-plugin-gtk 打的，
+# 里面塞了整套 Ubuntu 22.04 的 GTK/WebKit 库，其中 usr/lib/libwayland-client.so.0
+# 是 wayland 1.20 时代的旧版，缺 wl_fixes_interface / wl_display_create_queue_with_name /
+# wl_display_dispatch_queue_timeout 这几个新符号，Mesa 26 的 libEGL_mesa 一加载就失败
+# → eglGetPlatformDisplay 报 EGL_BAD_PARAMETER（实测：把这个旧 so 丢进
+# LD_LIBRARY_PATH，连 EGL_PLATFORM_X11 都建不出 display）→ WebKit 起不来合成器
+# → 程序在跑、窗口一片空白。deb 干净得多：里面只有 /usr/bin/coolapk_desktop（21M）
+# + 图标 + 桌面项，一个自带 .so 都没有，直接吃系统的 webkit2gtk-4.1 / gtk3，
+# 实测同一台机器上没有任何 EGL 报错。
+#
+# 依赖按 ldd 实测写：主程序直接链 gtk3 / webkit2gtk-4.1 / javascriptcoregtk-4.1，
+# 其余（pango、gdk-pixbuf2、gstreamer、libsoup3、libsecret、glycin 等）都由这两个带进来。
+# 托盘图标是运行时 dlopen libayatana-appindicator3.so.1，缺了只是没托盘 → optdepends。
+pkgname=coolapk-desktop
+pkgver=1.35.0
+pkgrel=1
+pkgdesc="酷安跨平台桌面客户端（Tauri 2 + Vue 3 + Rust，非官方）"
+arch=('x86_64')
+url="https://github.com/daimiaopeng/coolapk-desktop"
+license=('MIT')
+depends=('glibc' 'gcc-libs' 'gtk3' 'webkit2gtk-4.1')
+optdepends=('libayatana-appindicator: 系统托盘图标（缺失不影响主界面）'
+            'xdg-utils: 用系统浏览器打开链接')
+options=('!strip')
+source=("https://github.com/daimiaopeng/coolapk-desktop/releases/download/v${pkgver}/coolapk-desktop_${pkgver}_amd64.deb"
+        'LICENSE')
+sha256sums=('933bde230ee8c08b87640a63725ea28f8830056781b32e521d582863588ff32f'
+            '2ac4d99718267f226dabb1d1228b80c6e82e296ae316b7b5458e0cc2bdade1e3')
+
+package() {
+	# deb 是个 ar 归档：debian-binary + control.tar.gz + data.tar.gz。
+	# 只要 data.tar.gz，里面就是完整的 usr/ 树（含 /usr/bin/coolapk_desktop、图标、桌面项）。
+	bsdtar -xf "$srcdir/coolapk-desktop_${pkgver}_amd64.deb" -C "$srcdir" data.tar.gz
+	bsdtar -xf "$srcdir/data.tar.gz" -C "$pkgdir"
+
+	# 上游是 MIT，重分发必须带上版权声明和许可原文
+	install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

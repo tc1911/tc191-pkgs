@@ -33,6 +33,7 @@ sudo pacman -S open-vt-bin        # 例如
 | `openseeface` | OpenSeeFace 面捕（facetracker） |
 | `psd2live-bin` | psd2live：PSD → Live2D 自动绑定的桌面版（2.0 起上游自带 MCP，**自带 JRE**）|
 | `bililive` | Bilibili 直播弹幕 TUI 客户端，Rust 重写版（弹幕 / 扫码登录 / 分区 / 开播取推流码 / OBS 联动）|
+| `frpc-gui` | [frpc-gui](https://github.com/tc1911/frpc-gui) frpc 的 GPUI 图形前端：主页启停隧道，设置页填服务器与端口映射，守护进程常驻，关掉界面不影响已建立的隧道 |
 | `open-frp-cross-platform-launcher` | [OpenFrp CPL](https://github.com/ZGIT-Network/OpenFrp-CrossPlatformLauncher) 跨平台 frpc 启动器（Rust + Tauri 2）。重打包上游 `.deb`，**许可证是 Apache-2.0 + Commons Clause，仅限非商业** |
 
 > `bilibili-live-tui-plus`（Go 版）2026-10-03 起停更，被 `bililive` 取代：

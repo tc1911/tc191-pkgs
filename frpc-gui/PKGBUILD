@@ -1,0 +1,44 @@
+# Maintainer: tc1911 <171405782+tc1911@users.noreply.github.com>
+# 源码包：从 GitHub 的 tag 拉源码，用 cargo 编译。
+# GPUI 的依赖链里有两个包在新版 Rust 上会出问题，仓库里 vendor/ 各放了一份改过的，
+# Cargo.toml 用 [patch.crates-io] 指过去 —— 打包时别删 vendor。
+pkgname=frpc-gui
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='frpc 的图形前端（GPUI）：主页启停隧道，守护进程常驻'
+arch=('x86_64')
+url='https://github.com/tc1911/frpc-gui'
+license=('MIT')
+# 按 ldd 实测出来的：glibc、libgcc、libxcb 那一串，加上 xkbcommon 两个
+depends=('glibc' 'gcc-libs' 'libxau' 'libxcb' 'libxdmcp' 'libxkbcommon' 'libxkbcommon-x11')
+makedepends=('cargo' 'rust' 'git')
+# 这些是 dlopen 或运行时才用到的，缺了不至于起不来
+optdepends=(
+	'vulkan-icd-loader: GPU 渲染后端'
+	'wayland: Wayland 会话'
+	'xorg-xwayland: 只有 X11 会话时需要'
+	'frpc: 想用系统里的 frpc，而不是程序自己去 GitHub 下'
+)
+options=('!debug' '!lto')
+source=("$pkgname::git+https://github.com/tc1911/frpc-gui.git#tag=v$pkgver")
+# git 源没有稳定的校验和，tag 就是那根钉子
+sha256sums=('SKIP')
+
+build() {
+	cd "$pkgname"
+	export RUSTUP_TOOLCHAIN=stable
+	# 依赖全在 Cargo.lock 里钉死了，走 locked 免得打包时又把 crates 升一遍
+	cargo build --release --locked
+}
+
+package() {
+	cd "$pkgname"
+	install -Dm755 target/release/frpc-gui "$pkgdir/usr/bin/frpc-gui"
+	install -Dm644 packaging/linux/frpc-gui.desktop \
+		"$pkgdir/usr/share/applications/frpc-gui.desktop"
+	install -Dm644 assets/icon.png \
+		"$pkgdir/usr/share/icons/hicolor/512x512/apps/frpc-gui.png"
+	install -Dm644 assets/icon.svg \
+		"$pkgdir/usr/share/icons/hicolor/scalable/apps/frpc-gui.svg"
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
